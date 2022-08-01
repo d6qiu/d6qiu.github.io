@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+    <script src="https://d3js.org/d3.v6.js"></script>
+    <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+    <style type="text/css">
+
+        body {
+        }
+  
+        .axis path, .axis line {
+          fill: none;
+          stroke: black;
+          shape-rendering: crispEdges;
+        }
+        .tooltip {
+            position: absolute;
+            height: 120px;
+            width: 200px;
+            font-size: 20px;
+            background-color:white;
+            text-align:center;
+            border-radius: 10px;
+            border: 1px solid black;
+            z-index: 100;
+        }
+       
+  
+    </style>
+    <body onload="init()">
+        <script src="https://d3js.org/d3.v6.js"></script>
+        <h1 id="intro">Some might argue that car brands will make a difference in MPG. If so to what degree?</h1>
+        <h2 id="one">How does MPG in highways vesus in cities differ? Click on the buttons to see</h2>
+        <div>
+            <button id="city" onclick="change('CityMPG')">City MPG</button>
+            <button id="highway" onclick="change('HighwayMPG')">Highway MPG</button>
+            
+        </div>
+        <svg id="scene3" width=1800 height=800>
+            <text x="900" y="700"></text>
+        </svg>
+        <script>
+
+        
+        var scene3 = d3.select('#scene3')
+        
+        var m = 50,
+            width = 1700,
+            height = 700;
+        
+        scene3.attr("class", "center-screen");
+        scene3.append('text')
+            .attr('x', -400)
+            .attr('y', 15)
+            .attr('transform', 'rotate(-90)')
+            .attr('text-anchor', 'middle')
+            .text('Average MPG')
+
+        var tooltip = d3.select("body").append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0);
+            
+        var filling = "#5E4FA2"
+        var x;
+        var y;
+        var h;
+        async function init() {
+            d3.csv("https://flunky.github.io/cars2017.csv").then(function (d) {
+                
+                x=d3.scaleBand().domain(d.map(function (d) { return d.Make + d.EngineCylinders})).range([0,width]);
+                y=d3.scaleLinear().domain([0, 150]).range([height,0]);
+                h=d3.scaleLinear().domain([0, 150]).range([0,height])
+                
+                scene3.append("g").attr("transform","translate("+m+","+m+")").call(d3.axisLeft(y));
+                <!--        scene3.append("g").attr("transform","translate("+m+","+(m+height)+")").call(d3.axisBottom(x));-->
+
+                
+                var xs = d3.scaleBand()
+                    .range([0, width])
+                    .domain(d.map(function (d) { return d.Make + d.EngineCylinders}));
+
+                var xA = d3.axisBottom()
+                    .scale(xs)
+                    .ticks(5);
+
+                scene3.append("g")
+                    .attr("transform", "translate(50,750)")
+                    .attr("class", "axis")
+                    .call(xA)
+                    .selectAll("text")
+                    .attr("transform", "translate(-20,0)rotate(-50)")
+                    .style("text-anchor", "end");
+                
+                
+<!--                scene3.selectAll('rect')-->
+<!--                  .data(data)-->
+<!--                  .enter()-->
+<!--                  .append('rect')-->
+<!--                    .attr('x',function(d,i){return x(i);})-->
+<!--                    .attr('y',function(d) {return y(d);})-->
+<!--                    .attr('width',xs.bandwidth())-->
+<!--                    .attr('height',function(d) {return h(d);})-->
+                    
+                scene3.selectAll("rect")
+                    .data(d)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function (d, i) { return x(d.Make + d.EngineCylinders)+m; })
+                    .attr("y", function (d, i) { return y(parseInt(d.AverageHighwayMPG))+m; })
+                    .attr("width", x.bandwidth())
+                    .attr("height", function (d, i) { return h(parseInt(d.AverageHighwayMPG));})
+                    .attr("fill", function(d){
+<!--                        if (d.Fuel == "Gasoline") {-->
+<!--                            return "red";-->
+<!--                        } else if (d.Fuel == 'Diesel') {-->
+<!--                            return "green";-->
+<!--                        } else {-->
+<!--                            return "blueviolet";-->
+<!--                        }-->
+                        return "lightBlue";
+                        }).on("mouseover", function (event,d) {
+                        d3.select(this)
+                            .style("stroke", "black")
+                        tooltip
+                            .style('opacity', 0.9)
+                            .style('left', (event.x ) + 'px')
+                            .style('top', (event.y) + 'px')
+                        tooltip.html(d.Make+"<br>"
+                            +"Fuels: " +d.Fuel+"<br>"
+                            +"EngineCylinders: "+d.EngineCylinders+"<br>"
+                            +"highway: "+d.AverageHighwayMPG+"<br>"
+                            +"city: "+d.AverageCityMPG)
+                    })
+                    .on("mouseout", function (d) {
+                        tooltip
+                            .style('opacity', 0);
+                        d3.select(this)
+                            .style("stroke", "none")
+                        
+                    });
+            })
+        }
+            
+
+        function change(HighwayOrCity) {
+            if (HighwayOrCity === "HighwayMPG") {
+                scene3.selectAll("rect")
+                    .transition()
+                    .duration(500)
+                    .attr("fill", "lightBlue")
+                    .attr("y", function (b, i) { return y(parseInt(b.AverageHighwayMPG))+m; })
+                    .attr("height", function (b, i) { return h(parseInt(b.AverageHighwayMPG));})
+            } else {
+                scene3.selectAll("rect")
+                    .transition()
+                   .duration(500)
+                    .attr("fill", "pink")
+                    .attr("y", function (b, i) { return y(parseInt(b.AverageCityMPG))+m; })
+                    .attr("height", function (b, i) { return h(parseInt(b.AverageCityMPG));})
+            }
+        }
+
+            
+            
+            const annotations1 = [
+            {
+                note: {
+                label: "These cars are mostly fueled by gasoline",
+                title: "Overall, different brands of cars does not make a significant impact on MPG",
+                align: "left",
+                wrap: 115,
+                padding: 3
+                },
+                color: "darkslategrey",
+                x: 100,
+                y: 600,
+                dy: -100,
+                dx: 745
+            }
+            ];
+
+            const annotations2 = [
+            {
+                note: {
+                label: "",
+                title: "",
+                align: "right",
+                wrap: 220,
+                padding: 3
+                },
+                color: "darkslategrey",
+                x: 1700,
+                y: 600,
+                dy: -100,
+                dx: -745
+            }
+            ];
+            
+            
+
+            var makeAnnotations = d3.annotation().annotations(annotations1);
+            scene3.append("g")
+                .style("font-size", "13px")
+                .call(makeAnnotations);
+            makeAnnotations = d3.annotation().annotations(annotations2);
+            scene3.append("g")
+                .style("font-size", "13px")
+                .call(makeAnnotations);
+                
+            const annotations3 = [
+            {
+                note: {
+                label: "",
+                title: "These outliers with sigificant high MPG are cars fueled by eletricity",
+                align: "left",
+                wrap: 115,
+                padding: 3
+                },
+                color: "darkslategrey",
+                x: 250,
+                y: 220,
+                dy: -120,
+                dx: 650
+            }
+            ];
+
+            const annotations4 = [
+            {
+                note: {
+                label: "",
+                title: "",
+                align: "right",
+                wrap: 220,
+                padding: 3
+                },
+                color: "darkslategrey",
+                x: 1630,
+                y: 280,
+                dy: -180,
+                dx: -620
+            }
+            ];
+            
+            
+            makeAnnotations = d3.annotation().annotations(annotations3);
+            scene3.append("g")
+                .style("font-size", "13px")
+                .call(makeAnnotations);
+            makeAnnotations = d3.annotation().annotations(annotations4);
+            scene3.append("g")
+                .style("font-size", "13px")
+                .call(makeAnnotations);
+
+            
+            
+            
+           
+        </script>
+        <p>
+        <a class="carDiff" href="scene2.html" role="button">Previous</a>
+<!--        <a class="carDiff" href="scene3.html" role="button">Next</a>-->
+        </p>
+
+    </body>
+</html>

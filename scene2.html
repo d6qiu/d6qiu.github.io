@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v6.js'></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<style>
+    
+  circle {
+    fill: red;
+  }
+
+  .Gasoline {
+    fill: pink;
+    opacity: 0.1;
+  }
+
+  .Electricity {
+    fill: blueviolet;
+    opacity: 1;
+  }
+
+  .Diesel {
+    fill: green;
+    opacity: 0.1;
+  }
+    
+    body {
+        margin:50px;
+    }
+    .tooltip {
+      position: absolute;
+      height: 120px;
+      width: 200px;
+      font-size: 20px;
+      background-color:white;
+      text-align:center;
+      border-radius: 10px;
+      border: 1px solid black;
+      z-index: 100;
+    }
+    
+    
+
+</style>
+
+
+<body onload='init()'>
+    <h1>Electric Cars outperform Gasoline and Diesel cars </h1>
+    <h2></h2>
+    </h3>
+      <svg width=800 height=800 id="scene2"></svg>
+  <script>
+    var data;
+    async function init() {
+      data = await d3.csv("https://flunky.github.io/cars2017.csv");
+      var scene2 = d3.select('#scene2')
+        var width = 700
+        var height = 700
+        var margin = 50
+        var x = d3.scaleLog()
+            .domain([10, 150])
+            .range([0, width])
+                .base(10);
+        var y = d3.scaleLog()
+            .domain([10, 150])
+            .range([height, 0])
+                .base(10);
+
+
+      var tooltip = d3.select("body").append('div')
+          .attr('class', 'tooltip')
+          .style('opacity', 0);
+
+        scene2.append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 0)
+          .attr("x", 0 - (height / 2 + margin))
+          .attr("dy", "1em")
+          .style("text-anchor", "middle")
+          .text("Average Highway MPG");
+          
+
+        scene2.append("text")
+          .attr("transform",
+            "translate(" + (width / 2 + margin) + " ," + (margin + height + 40) + ")")
+          .style("text-anchor", "middle")
+          .text("Average City MPG");
+
+        scene2
+          .append("g").attr("transform", "translate(" + margin + "," + margin + ")")
+          .selectAll('circle')
+          .data(data)
+          .enter()
+          .append('circle')
+          .attr('class', function(d) {return d.Fuel;})
+          .attr("cx", function(d,i) {return x(d.AverageCityMPG);})
+          .attr("cy", function(d,i) {return y(d.AverageHighwayMPG);})
+          .attr("r", function(d,i) {return 6+parseInt(d.EngineCylinders);})
+          .on("mouseover", function (event,d) {
+              d3.select(this)
+                  .style("stroke", "black")
+              tooltip
+                  .style('opacity', 0.9)
+                  .style('left', (event.x) + 'px')
+                  .style('top', (event.y) + 'px')
+              tooltip.html(d.Make+"<br>"
+                  +"Fuels: " +d.Fuel+"<br>"
+                  +"EngineCylinders: "+d.EngineCylinders+"<br>"
+                  +"highway: "+d.AverageHighwayMPG+"<br>"
+                  +"city: "+d.AverageCityMPG)
+          })
+          .on("mouseout", function (d) {
+              tooltip.style('opacity', 0);
+              d3.select(this)
+                  .style("stroke", "none")
+          });
+          
+                
+          scene2.append("g")
+          .attr("transform","translate("+margin+","+margin+")")
+          .call(d3.axisLeft(y)
+            .tickValues([10,20,50,100])
+            .tickFormat(d3.format("~s")));
+            
+          scene2.append("g")
+          .attr("transform","translate("+margin+","+(margin+height)+")")
+          .call(d3.axisBottom(x)
+            .tickValues([10,20,50,100])
+            .tickFormat(d3.format("~s")));
+
+  scene2.append("circle").attr("cx", 600).attr("cy", 400).attr("r", 4).style("fill", "red")
+  scene2.append("circle").attr("cx", 600).attr("cy", 420).attr("r", 4).style("fill", "green")
+  scene2.append("circle").attr("cx", 600).attr("cy", 440).attr("r", 4).style("fill", "blueviolet")
+  scene2.append("text").attr("x", 620).attr("y", 400).text("Gasoline cars").style("font-size", "15px").attr("alignment-baseline", "middle")
+  scene2.append("text").attr("x", 620).attr("y", 420).text("Diesel cars").style("font-size", "15px").attr("alignment-baseline", "middle")
+  scene2.append("text").attr("x", 620).attr("y", 440).text("Electric cars").style("font-size", "15px").attr("alignment-baseline", "middle")
+
+      const annotations1 = [
+      {
+          note: {
+          label: "While Gasoline cars and Diesel cars have MPG under 40. Most Electric cars have MPG over 100.",
+          title: "MPG of Electric cars",
+          align: "right",
+          wrap: 200,
+          padding: 3
+          },
+          color: "darkslategrey",
+          x: 600,
+          y: 160,
+          dy: 70,
+          dx: -80
+      }
+      ];
+
+      var makeAnnotations = d3.annotation().annotations(annotations1);
+      scene2.append("g")
+          .style("font-size", "13px")
+          .call(makeAnnotations);
+    }
+    
+  </script>
+    <p>
+    <a class="carDiff" href="index.html" role="button">Previous</a>
+    <a class="carDiff" href="scene3.html" role="button">Next</a>
+    </p>
+</body>
+
+</html>
+
